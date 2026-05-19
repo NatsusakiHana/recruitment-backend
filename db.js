@@ -1,3 +1,6 @@
+// 加载环境变量
+require('dotenv').config();
+
 const { Sequelize, DataTypes } = require("sequelize");
 
 // 从环境变量中读取数据库配置
@@ -321,15 +324,241 @@ const Submission = sequelize.define("Submission", {
   updatedAt: 'updatedAt',
 });
 
+// 管理员表
+const Admin = sequelize.define("Admin", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  username: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+    comment: '用户名',
+  },
+  password: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    comment: '密码（加密）',
+  },
+  realName: {
+    type: DataTypes.STRING(50),
+    comment: '真实姓名',
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+    comment: '手机号',
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    comment: '邮箱',
+  },
+  role: {
+    type: DataTypes.ENUM('admin', 'super_admin'),
+    allowNull: false,
+    defaultValue: 'admin',
+    comment: '角色',
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'disabled'),
+    allowNull: false,
+    defaultValue: 'active',
+    comment: '状态',
+  },
+  lastLoginAt: {
+    type: DataTypes.DATE,
+    comment: '最后登录时间',
+  },
+}, {
+  tableName: 'admins',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+});
+
+// 通知公告表
+const Announcement = sequelize.define("Announcement", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  title: {
+    type: DataTypes.STRING(200),
+    allowNull: false,
+    comment: '标题',
+  },
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    comment: '内容',
+  },
+  type: {
+    type: DataTypes.ENUM('notice', 'announcement'),
+    allowNull: false,
+    defaultValue: 'notice',
+    comment: '类型：notice-通知，announcement-公告',
+  },
+  isTop: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: '是否置顶',
+  },
+  status: {
+    type: DataTypes.ENUM('draft', 'published'),
+    allowNull: false,
+    defaultValue: 'draft',
+    comment: '状态',
+  },
+  publishedAt: {
+    type: DataTypes.DATE,
+    comment: '发布时间',
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    comment: '创建人ID',
+  },
+  viewCount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    comment: '浏览次数',
+  },
+}, {
+  tableName: 'announcements',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+});
+
+// 轮播图表
+const Banner = sequelize.define("Banner", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  title: {
+    type: DataTypes.STRING(100),
+    comment: '标题',
+  },
+  imageUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: false,
+    comment: '图片URL',
+  },
+  linkUrl: {
+    type: DataTypes.STRING(500),
+    comment: '链接URL',
+  },
+  sortOrder: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    comment: '排序',
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'inactive'),
+    allowNull: false,
+    defaultValue: 'active',
+    comment: '状态',
+  },
+}, {
+  tableName: 'banners',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+});
+
+// 单位简介表
+const CompanyInfo = sequelize.define("CompanyInfo", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    comment: '简介内容',
+  },
+  images: {
+    type: DataTypes.JSON,
+    comment: '图片列表',
+  },
+  updatedBy: {
+    type: DataTypes.INTEGER,
+    comment: '更新人ID',
+  },
+}, {
+  tableName: 'company_info',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+});
+
+// 系统设置表
+const SystemSetting = sequelize.define("SystemSetting", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  key: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    unique: true,
+    comment: '设置键',
+  },
+  value: {
+    type: DataTypes.TEXT,
+    comment: '设置值',
+  },
+  description: {
+    type: DataTypes.STRING(255),
+    comment: '描述',
+  },
+}, {
+  tableName: 'system_settings',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+});
+
 // 建立关联关系
 Submission.belongsTo(File, { as: 'photoFile', foreignKey: 'photoFileId' });
 Submission.belongsTo(File, { as: 'idCardFrontFile', foreignKey: 'idCardFrontFileId' });
 Submission.belongsTo(File, { as: 'idCardBackFile', foreignKey: 'idCardBackFileId' });
 
+Announcement.belongsTo(Admin, { as: 'creator', foreignKey: 'createdBy' });
+CompanyInfo.belongsTo(Admin, { as: 'updater', foreignKey: 'updatedBy' });
+
 // 数据库初始化方法
 async function init() {
   await File.sync({ alter: true });
   await Submission.sync({ alter: true });
+  await Admin.sync({ alter: true });
+  await Announcement.sync({ alter: true });
+  await Banner.sync({ alter: true });
+  await CompanyInfo.sync({ alter: true });
+  await SystemSetting.sync({ alter: true });
+
+  // 创建默认管理员账号（如果不存在）
+  const bcrypt = require('bcryptjs');
+  const adminCount = await Admin.count();
+  if (adminCount === 0) {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    await Admin.create({
+      username: 'admin',
+      password: hashedPassword,
+      realName: '系统管理员',
+      role: 'super_admin',
+      status: 'active',
+    });
+    console.log('默认管理员账号已创建：admin / admin123');
+  }
 }
 
 // 导出初始化方法和模型
@@ -337,5 +566,10 @@ module.exports = {
   init,
   File,
   Submission,
+  Admin,
+  Announcement,
+  Banner,
+  CompanyInfo,
+  SystemSetting,
   sequelize,
 };
