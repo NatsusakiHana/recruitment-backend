@@ -7,7 +7,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const bcrypt = require("bcryptjs");
 const { init: initDB, Counter, File, Submission, Admin, Announcement, Banner, CompanyInfo, SystemSetting } = require("./db");
-const { generateToken, adminAuth, superAdminAuth } = require("./auth");
+const { generateToken, adminAuth } = require("./auth");
 
 const logger = morgan("tiny");
 
